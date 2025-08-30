@@ -20,8 +20,8 @@ app.post('/submit', async (req, res) => {
       'system', 'exec', 'fork', 'popen', 'fopen', 'freopen', 'remove', 'rename', 'tmpfile', 'tmpnam', 'open', 'creat', 'unlink', 'rmdir', 'chdir', 'chmod', 'chown', 'kill', 'signal', 'raise', 'socket', 'connect', 'listen', 'accept', 'bind', 'gets', 'scanf', 'sscanf', 'sprintf', 'vsprintf', 'strcpy', 'strcat', 'gets_s', 'strcpy_s', 'strcat_s', 'memcpy', 'memmove', 'dlopen', 'dlsym', 'dlclose', 'dlerror'
     ];
 
-    const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\b${fn}\s*\(`).test(code));
-    if (foundDangerous.length > 0) {
+    const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRegExp(fn)}\\s*\\(`).test(code));if (foundDangerous.length > 0) {
       return res.status(400).json({ error: 'Malicious or dangerous function calls detected', functions: foundDangerous });
     }
 
