@@ -17,7 +17,7 @@ app.post('/submit', async (req, res) => {
     const exeFile = `${submissionid}.exe`;
 
     const dangerousFunctions = [
-      'system', 'exec', 'fork', 'popen', 'fopen', 'freopen', 'remove', 'rename', 'tmpfile', 'tmpnam', 'open', 'creat', 'unlink', 'rmdir', 'chdir', 'chmod', 'chown', 'kill', 'signal', 'raise', 'socket', 'connect', 'listen', 'accept', 'bind', 'gets', 'scanf', 'sscanf', 'sprintf', 'vsprintf', 'strcpy', 'strcat', 'gets_s', 'strcpy_s', 'strcat_s', 'memcpy', 'memmove', 'dlopen', 'dlsym', 'dlclose', 'dlerror'
+      'system', 'exec', 'fork', 'popen', 'fopen', 'freopen', 'remove', 'rename', 'tmpfile', 'tmpnam', 'open', 'creat', 'unlink', 'rmdir', 'chdir', 'chmod', 'chown', 'kill', 'signal', 'raise', 'socket', 'connect', 'listen', 'accept', 'bind', 'gets', 'strcpy', 'strcat', 'gets_s', 'strcpy_s', 'strcat_s', 'memcpy', 'memmove', 'dlopen', 'dlsym', 'dlclose', 'dlerror'
     ];
 
     const escapeRegExp = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
