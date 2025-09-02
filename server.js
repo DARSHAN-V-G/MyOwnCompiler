@@ -7,6 +7,29 @@ const path = require('path');
 const app = express();
 app.use(bodyParser.json());
 
+// Helper function to safely delete files with retry logic (for Windows compatibility)
+const safeDeleteFile = async (filePath, maxRetries = 5, delay = 200) => {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      return; // Success
+    } catch (error) {
+      if (error.code === 'EPERM' || error.code === 'EBUSY') {
+        if (i < maxRetries - 1) {
+          // Exponential backoff with jitter
+          const waitTime = delay * Math.pow(2, i) + Math.random() * 100;
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+      }
+      console.warn(`Failed to delete ${filePath} after ${maxRetries} attempts:`, error.message);
+      // Don't throw error, just log warning as cleanup failure shouldn't crash the server
+    }
+  }
+};
+
 app.post('/submit', async (req, res) => {
   const { code, testCases, submissionid } = req.body;
   if (!code || !testCases || !submissionid) {
@@ -29,9 +52,12 @@ const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRe
 
     try {
       const gccCmd = `gcc -Wall -Wextra -pedantic -g ${cFile} -o ${exeFile}`;
-      exec(gccCmd, async (err, stdout, stderr) => {
+      exec(gccCmd, { timeout: 10000 }, async (err, stdout, stderr) => {
       if (err) {
-        fs.unlinkSync(cFile);
+        await safeDeleteFile(cFile);
+        if (err.killed && err.signal === 'SIGTERM') {
+          return res.status(400).json({ error: 'Compilation timeout: Code took too long to compile' });
+        }
         return res.status(400).json({ error: 'Compilation failed', details: stderr });
       }
 
@@ -47,8 +73,28 @@ const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRe
               if (error) return reject(stderr || error.message);
               resolve(stdout);
             });
+            
+            // Set a timeout to kill the process if it runs too long (prevents infinite loops)
+            const timeout = setTimeout(() => {
+              child.kill('SIGTERM'); // Try graceful termination first
+              setTimeout(() => {
+                child.kill('SIGKILL'); // Force kill if graceful termination fails
+              }, 1000);
+              reject('Execution timeout: Program took too long to execute (possible infinite loop)');
+            }, 5000); // 5 second timeout
+            
+            child.on('exit', () => {
+              clearTimeout(timeout);
+            });
+            
             child.stdin.write(input + '\n');
             child.stdin.end();
+            
+            // Ensure the process is fully terminated
+            child.on('exit', () => {
+              // Small delay to ensure file handles are released on Windows
+              setTimeout(() => {}, 100);
+            });
           });
           const normalize = str => str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
           passed = normalize(actualOutput) === normalize(expectedOutput);
@@ -65,14 +111,14 @@ const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRe
         });
       }
 
-      fs.unlinkSync(cFile);
-      fs.unlinkSync(exeFile);
+      await safeDeleteFile(cFile);
+      await safeDeleteFile(exeFile);
 
       res.json({ results });
     });
   } catch (err) {
-    if (fs.existsSync(cFile)) fs.unlinkSync(cFile);
-    if (fs.existsSync(exeFile)) fs.unlinkSync(exeFile);
+    await safeDeleteFile(cFile);
+    await safeDeleteFile(exeFile);
     return res.status(500).json({ error: 'Internal server error', details: err.message });
   }
 });
