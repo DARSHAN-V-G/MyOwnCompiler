@@ -1,10 +1,19 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const cors = require('cors');
 const fs = require('fs');
 const { exec } = require('child_process');
 const path = require('path');
 
 const app = express();
+
+// CORS middleware - allow all origins
+app.use(cors({
+  origin: '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+}));
+
 app.use(bodyParser.json());
 
 // Helper function to safely delete files with retry logic (for Windows compatibility)
