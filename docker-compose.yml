@@ -3,7 +3,7 @@ version: '3.8'
 services:
   nginx:
     image: nginx:latest
-    container_name: nginx_cdn
+    container_name: nginx_loadbalancer
     ports:
       - "6004:9000"
     volumes:
