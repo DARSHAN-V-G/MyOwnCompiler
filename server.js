@@ -132,6 +132,54 @@ const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRe
   }
 });
 
+app.post('/submit-python', async (req, res) => {
+  const { code, testCases, submissionid } = req.body;
+  if (!code || !testCases || !submissionid) {
+    return res.status(400).json({ error: 'Missing required fields.' });
+  }
+
+  const pyFile = `${submissionid}.py`;
+  fs.writeFileSync(pyFile, code);
+
+  try {
+    const results = [];
+    for (const testCase of testCases) {
+      const { input, expectedOutput } = testCase;
+      let actualOutput = '';
+      let passed = false;
+
+      try {
+        actualOutput = await new Promise((resolve, reject) => {
+          const child = exec(`python ${pyFile}`, (error, stdout, stderr) => {
+            if (error) return reject(stderr || error.message);
+            resolve(stdout);
+          });
+          child.stdin.write(input + '\n');
+          child.stdin.end();
+        });
+        const normalize = str => str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+        passed = normalize(actualOutput) === normalize(expectedOutput);
+      } catch (e) {
+        actualOutput = typeof e === 'string' ? e : (e.message || 'Runtime error');
+        passed = false;
+      }
+
+      results.push({
+        input,
+        expectedOutput,
+        actualOutput,
+        passed
+      });
+    }
+    fs.unlinkSync(pyFile);
+    res.json({ results });
+  } catch (err) {
+    if (fs.existsSync(pyFile)) fs.unlinkSync(pyFile);
+    return res.status(500).json({ error: 'Internal server error', details: err.message });
+  }
+});
+
+
 app.get('/', (req, res) => {
   res.status(200).send('Server is running -> No issues');
 });
