@@ -6,7 +6,7 @@ const { exec } = require('child_process');
 const path = require('path');
 
 const app = express();
-
+let count = 0
 // CORS middleware - allow all origins
 app.use(cors({
   origin: '*',
@@ -137,7 +137,8 @@ app.post('/submit-python', async (req, res) => {
   if (!code || !testCases || !submissionid) {
     return res.status(400).json({ error: 'Missing required fields.' });
   }
-
+  console.log(`count - ${count}, submission - ${submissionid}`);
+  count = count + 1;
   const pyFile = `${submissionid}.py`;
   fs.writeFileSync(pyFile, code);
 
@@ -150,15 +151,55 @@ app.post('/submit-python', async (req, res) => {
 
       try {
         actualOutput = await new Promise((resolve, reject) => {
-          const child = exec(`python ${pyFile}`, (error, stdout, stderr) => {
-            if (error) return reject(stderr || error.message);
-            resolve(stdout);
+          const child = exec(`python ${pyFile}`, {
+            timeout: 5000  // 5 second timeout
           });
-          child.stdin.write(input + '\n');
-          child.stdin.end();
+          
+          let output = '';
+          let error = '';
+
+          child.stdout.on('data', (data) => {
+            output += data;
+          });
+
+          child.stderr.on('data', (data) => {
+            error += data;
+          });
+
+          child.stdin.on('error', (err) => {
+            if (err.code === 'EPIPE') {
+              // Ignore EPIPE errors
+              return;
+            }
+            reject(err);
+          });
+
+          child.on('close', (code) => {
+            if (code !== 0) {
+              reject(error || `Process exited with code ${code}`);
+            } else {
+              resolve(output);
+            }
+          });
+
+          // Write input and end stdin
+          try {
+            child.stdin.write(input + '\n');
+            child.stdin.end();
+          } catch (err) {
+            // Ignore write errors
+          }
         });
-        const normalize = str => str.replace(/\r\n/g, '\n').replace(/\r/g, '\n').trim();
+
+        const normalize = str => str
+  .replace(/\r\n/g, '\n')
+  .replace(/\r/g, '\n')
+  .split('\n')
+  .map(line => line.trim())  // trim each line individually
+  .join('\n')
+  .trim(); 
         passed = normalize(actualOutput) === normalize(expectedOutput);
+        console.log(normalize(actualOutput),normalize(expectedOutput));
       } catch (e) {
         actualOutput = typeof e === 'string' ? e : (e.message || 'Runtime error');
         passed = false;
@@ -171,11 +212,29 @@ app.post('/submit-python', async (req, res) => {
         passed
       });
     }
-    fs.unlinkSync(pyFile);
+
+    // Cleanup
+    try {
+      fs.unlinkSync(pyFile);
+    } catch (err) {
+      console.error('Error cleaning up:', err);
+    }
+
     res.json({ results });
   } catch (err) {
-    if (fs.existsSync(pyFile)) fs.unlinkSync(pyFile);
-    return res.status(500).json({ error: 'Internal server error', details: err.message });
+    // Cleanup on error
+    try {
+      if (fs.existsSync(pyFile)) {
+        fs.unlinkSync(pyFile);
+      }
+    } catch (cleanupErr) {
+      console.error('Error cleaning up:', cleanupErr);
+    }
+
+    return res.status(500).json({ 
+      error: 'Internal server error', 
+      details: err.message 
+    });
   }
 });
 

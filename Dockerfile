@@ -2,7 +2,9 @@
 FROM node:lts
 
 # Install gcc for compiling C code
-RUN apt-get update && apt-get install -y gcc && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y gcc python3 && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
