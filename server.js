@@ -239,9 +239,11 @@ app.post('/compiler/submit-python', async (req, res) => {
 
 
 app.get('/compiler', (req, res) => {
-  res.status(200).send('Server is running -> No issues');
+  res.status(200).send('Server is running -> No issues with /compiler');
 });
-
+app.get('/', (req, res) => {
+  res.status(200).send('Server is running -> No issues without /compiler');
+});
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
