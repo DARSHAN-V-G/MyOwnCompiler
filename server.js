@@ -39,7 +39,7 @@ const safeDeleteFile = async (filePath, maxRetries = 5, delay = 200) => {
   }
 };
 
-app.post('/submit', async (req, res) => {
+app.post('/compiler/submit', async (req, res) => {
   const { code, testCases, submissionid } = req.body;
   if (!code || !testCases || !submissionid) {
     return res.status(400).json({ error: 'Missing required fields.' });
@@ -132,7 +132,7 @@ const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRe
   }
 });
 
-app.post('/submit-python', async (req, res) => {
+app.post('/compiler/submit-python', async (req, res) => {
   const { code, testCases, submissionid } = req.body;
   if (!code || !testCases || !submissionid) {
     return res.status(400).json({ error: 'Missing required fields.' });
@@ -238,7 +238,7 @@ app.post('/submit-python', async (req, res) => {
 });
 
 
-app.get('/', (req, res) => {
+app.get('/compiler', (req, res) => {
   res.status(200).send('Server is running -> No issues');
 });
 
