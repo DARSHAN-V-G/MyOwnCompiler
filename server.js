@@ -191,15 +191,14 @@ app.post('/submit-python', async (req, res) => {
           }
         });
 
-        const normalize = str => str
-  .replace(/\r\n/g, '\n')
-  .replace(/\r/g, '\n')
-  .split('\n')
-  .map(line => line.trim())  // trim each line individually
-  .join('\n')
-  .trim(); 
-        passed = normalize(actualOutput) === normalize(expectedOutput);
-        console.log(normalize(actualOutput),normalize(expectedOutput));
+    const normalize = str => str.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+    passed = normalize(actualOutput) === normalize(expectedOutput);
+    // console.log('actual')
+    // console.log(normalize(actualOutput));
+    // console.log('expected');
+    // console.log(normalize(expectedOutput));
+    // console.log(passed)
+    console.log('\n')
       } catch (e) {
         actualOutput = typeof e === 'string' ? e : (e.message || 'Runtime error');
         passed = false;
