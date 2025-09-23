@@ -151,7 +151,7 @@ app.post('//submit-python', async (req, res) => {
 
       try {
         actualOutput = await new Promise((resolve, reject) => {
-          const child = exec(`python ${pyFile}`, {
+          const child = exec(`python3 ${pyFile}`, {
             timeout: 5000  // 5 second timeout
           });
           
