@@ -2,9 +2,11 @@
 FROM node:lts
 
 # Install gcc for compiling C code
-RUN apt-get update && \
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list && \
+    apt-get update && \
     apt-get install -y gcc python3 && \
     rm -rf /var/lib/apt/lists/*
+
 
 # Set working directory
 WORKDIR /app
