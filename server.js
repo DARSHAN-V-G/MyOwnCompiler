@@ -132,7 +132,7 @@ const foundDangerous = dangerousFunctions.filter(fn => new RegExp(`\\b${escapeRe
   }
 });
 
-app.post('/compiler/submit-python', async (req, res) => {
+app.post('/submit-python', async (req, res) => {
   const { code, testCases, submissionid } = req.body;
   if (!code || !testCases || !submissionid) {
     return res.status(400).json({ error: 'Missing required fields.' });
