@@ -198,7 +198,7 @@ app.post('/submit-python', async (req, res) => {
     // console.log('expected');
     // console.log(normalize(expectedOutput));
     // console.log(passed)
-    console.log(`Executed for submission id - ${submissionid}`)
+    console.log(`Result - ${passed}`)
       } catch (e) {
         actualOutput = typeof e === 'string' ? e : (e.message || 'Runtime error');
         passed = false;
@@ -218,7 +218,7 @@ app.post('/submit-python', async (req, res) => {
     } catch (err) {
       console.error('Error cleaning up:', err);
     }
-
+    console.log(`Executed for submission id - ${submissionid}`)
     res.json({ results });
   } catch (err) {
     // Cleanup on error
