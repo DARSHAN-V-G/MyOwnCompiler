@@ -94,7 +94,7 @@ Health check endpoint.
 Server is running -> No issues
 ```
 
-#### `POST /submit`
+#### `POST /submit-c`
 Submit C code for compilation and execution with test cases.
 
 **Request Body:**
@@ -153,6 +153,67 @@ Submit C code for compilation and execution with test cases.
 
 - **400 Bad Request**: Missing required fields, compilation errors, or malicious code detected
 - **500 Internal Server Error**: Server-side execution errors
+
+#### `POST /submit-python`
+Submit C code for compilation and execution with test cases.
+
+**Request Body:**
+```json
+{
+  "code": "string",        // C source code
+  "testCases": [           // Array of test cases
+    {
+      "input": "string",           // Input to provide to the program
+      "expectedOutput": "string"   // Expected output from the program
+    }
+  ],
+  "submissionid": "string" // Unique identifier for this submission
+}
+```
+
+**Example Request:**
+```json
+{
+  "code": "n = int(input())\nnumbers = []\nfor _ in range(n):\n    numbers.append(int(input()))\nprint(sum(numbers))",
+  "testCases": [
+    {
+      "input": "3\n1\n2\n3",
+      "expectedOutput": "6"
+    },
+    {
+      "input": "4\n10\n20\n30\n40",
+      "expectedOutput": "100"
+    }
+  ],
+  "submissionid": "sum-array-py-001"
+}
+```
+
+**Success Response (200):**
+```json
+{
+    "results": [
+        {
+            "input": "3\n1\n2\n3",
+            "expectedOutput": "6",
+            "actualOutput": "6\n",
+            "passed": true
+        },
+        {
+            "input": "4\n10\n20\n30\n40",
+            "expectedOutput": "100",
+            "actualOutput": "100\n",
+            "passed": true
+        }
+    ]
+}
+```
+
+**Error Responses:**
+
+- **400 Bad Request**: Missing required fields, compilation errors, or malicious code detected
+- **500 Internal Server Error**: Server-side execution errors
+
 
 ## 🔒 Security Features
 
