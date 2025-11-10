@@ -160,7 +160,7 @@ Submit C code for compilation and execution with test cases.
 **Request Body:**
 ```json
 {
-  "code": "string",        // C source code
+  "code": "string",        // Python source code
   "testCases": [           // Array of test cases
     {
       "input": "string",           // Input to provide to the program
