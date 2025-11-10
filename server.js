@@ -39,7 +39,7 @@ const safeDeleteFile = async (filePath, maxRetries = 5, delay = 200) => {
   }
 };
 
-app.post('/compiler/submit', async (req, res) => {
+app.post('/submit-c', async (req, res) => {
   const { code, testCases, submissionid } = req.body;
   if (!code || !testCases || !submissionid) {
     return res.status(400).json({ error: 'Missing required fields.' });
